@@ -1,0 +1,13 @@
+numpy==2.4.6
+pywebview==6.2.1
+scikit-learn==1.8.0
+sentence-transformers==5.5.1
+torch==2.12.0
+transformers==4.45.0
+fastapi==0.137.1
+uvicorn==0.49.0
+websockets==10.4
+
+# CPU-only installation
+llama-cpp-python>=0.3.30
+ # CMAKE_ARGS="-DLLAMA_NATIVE=ON -DLLAMA_OPENMP=ON" pip install llama-cpp-python

@@ -1,0 +1,42 @@
+{
+  "builder_name": "parquet",
+  "citation": "",
+  "config_name": "default",
+  "dataset_name": "atis",
+  "dataset_size": 480971,
+  "description": "",
+  "download_size": 160084,
+  "features": {
+    "text": {
+      "dtype": "string",
+      "_type": "Value"
+    },
+    "category": {
+      "dtype": "string",
+      "_type": "Value"
+    }
+  },
+  "homepage": "",
+  "license": "",
+  "size_in_bytes": 641055,
+  "splits": {
+    "train": {
+      "name": "train",
+      "num_bytes": 371856,
+      "num_examples": 4455,
+      "dataset_name": "atis"
+    },
+    "test": {
+      "name": "test",
+      "num_bytes": 109115,
+      "num_examples": 1373,
+      "dataset_name": "atis"
+    }
+  },
+  "version": {
+    "version_str": "0.0.0",
+    "major": 0,
+    "minor": 0,
+    "patch": 0
+  }
+}

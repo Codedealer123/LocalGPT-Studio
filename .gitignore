@@ -1,0 +1,8 @@
+Training/intentDetector/saveDiffusionDB.py
+Training/intentDetector/saveMusicCaps.py
+Training/intentDetector/saveReadAloud.py
+pyproject.toml
+.python-version
+backend/llmBackend/testModel/
+backend/llmBackend/quant_model_map.json
+__pycache__/

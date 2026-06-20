@@ -1,0 +1,21 @@
+{
+  "id2label": {
+    "0": "generate_image",
+    "1": "generate_music",
+    "2": "read_aloud",
+    "3": "chat_with_llm"
+  },
+  "label2id": {
+    "generate_image": 0,
+    "generate_music": 1,
+    "read_aloud": 2,
+    "chat_with_llm": 3
+  },
+  "labels": [
+    "generate_image",
+    "generate_music",
+    "read_aloud",
+    "chat_with_llm"
+  ],
+  "max_len": 37
+}

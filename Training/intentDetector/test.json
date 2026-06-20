@@ -1,0 +1,42 @@
+[
+  {
+    "text": "Generate an image of a futuristic cyberpunk city at night",
+    "label": "generate_image"
+  },
+  {
+    "text": "Create a picture of a golden retriever playing in the park",
+    "label": "generate_image"
+  },
+  {
+    "text": "Compose a relaxing lo-fi music track for studying",
+    "label": "generate_music"
+  },
+  {
+    "text": "Generate background music for a space exploration video",
+    "label": "generate_music"
+  },
+  {
+    "text": "Read this paragraph aloud in a natural voice",
+    "label": "read_aloud"
+  },
+  {
+    "text": "Convert this text into speech with a calm tone",
+    "label": "read_aloud"
+  },
+  {
+    "text": "Explain quantum physics in simple terms like I'm 10",
+    "label": "chat_with_llm"
+  },
+  {
+    "text": "Help me write a professional email to my manager",
+    "label": "chat_with_llm"
+  },
+  {
+    "text": "Summarize the key points of this article",
+    "label": "chat_with_llm"
+  },
+  {
+    "text": "What are the best ways to improve focus while studying?",
+    "label": "chat_with_llm"
+  }
+]
