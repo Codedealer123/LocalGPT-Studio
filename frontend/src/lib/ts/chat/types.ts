@@ -33,4 +33,5 @@ export interface ChatState {
     version: number;
     chats: Chat[];
     activeChatId: string | null;
+    openChatMenuId: string | null;
 }

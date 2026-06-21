@@ -1,9 +1,15 @@
 import os
 import shutil
+import zipfile
 import python_minifier
 
 source_dir = "./backend"
+
 output_dir = "./prodBackend"
+
+# Clean previous build output
+if os.path.exists(output_dir):
+    shutil.rmtree(output_dir)
 
 for root, dirs, files in os.walk(source_dir):
     for file in files:
@@ -58,3 +64,4 @@ for root, dirs, files in os.walk(source_dir):
             shutil.copy2(input_file_path, output_file_path)
 
             print(f"Copied asset file: {file}")
+

@@ -1,106 +1,51 @@
 <script lang="ts">
-    let { isSidebarOpen, toggleSidebar } = $props();
-    
-    import { modelState, changeChosenModel } from "./ts/modelManager.svelte";
-    import { startWebsocket, defaultWsUri } from "./ts/websocket";
-    import { chatManager } from "./ts/chatManager.svelte";
-    
-    let searchQuery = $state("");
-    let inputMessage = $state("");
-    
-    const websocket = startWebsocket(defaultWsUri + "chat");
-    
-    let pingInterval: number | undefined;
-    
-    if (!chatManager.getActiveChat()) {
-      chatManager.createChat("New Chat");
+  let { isSidebarOpen, toggleSidebar } = $props();
+
+  import { modelState, changeChosenModel } from "./ts/modelManager.svelte";
+  import { markdownToHtml } from "./ts/markdown";
+  import { chatManager } from "./ts/chatManager.svelte";
+
+  import {
+    initChatController,
+    sendChatMessage
+  } from "./ts/chatController";
+
+  let searchQuery = $state("");
+  let inputMessage = $state("");
+
+  // start websocket + handlers (moved out of component)
+  initChatController();
+
+  // ensure chat exists
+  if (!chatManager.getActiveChat()) {
+    chatManager.createChat("New Chat");
+  }
+
+  // reactive messages
+  let messages = $derived(
+    chatManager.getActiveChat()?.messages ?? []
+  );
+
+  // model filter
+  let filteredModels = $derived(
+    modelState.downloadedModels.filter(model =>
+      model.toLowerCase().includes(searchQuery.toLowerCase())
+    )
+  );
+
+  function handleSend() {
+    if (!inputMessage.trim()) return;
+
+    sendChatMessage(inputMessage);
+    inputMessage = "";
+  }
+
+  function handleKeyDown(event: KeyboardEvent) {
+    if (event.key === "Enter" && !event.shiftKey) {
+      event.preventDefault();
+      handleSend();
     }
-    
-    let messages = $derived(
-      chatManager.getActiveChat()?.messages ?? []
-    );
-    
-    let filteredModels = $derived(
-      modelState.downloadedModels.filter(model =>
-        model.toLowerCase().includes(searchQuery.toLowerCase())
-      )
-    );
-    
-    websocket.addEventListener("open", () => {
-      pingInterval = window.setInterval(() => {
-        if (websocket.readyState === WebSocket.OPEN) {
-          websocket.send("ping");
-        }
-      }, 10000);
-    });
-    
-    websocket.addEventListener("close", () => {
-      if (pingInterval !== undefined) {
-        clearInterval(pingInterval);
-        pingInterval = undefined;
-      }
-    });
-    
-    websocket.addEventListener("message", (event) => {
-      let data: any;
-    
-      try {
-        data = JSON.parse(event.data);
-      } catch {
-        return;
-      }
-    
-      const activeChat = chatManager.getActiveChat();
-      if (!activeChat) return;
-    
-      const assistantId = data.assistantId;
-      if (!assistantId) return;
-    
-      if (data.type === "intent") {
-        chatManager.updateMessage(
-          activeChat.id,
-          assistantId,
-          `Intent: ${data.intent}\nConfidence: ${data.confidence}`
-        );
-      }
-    
-      if (data.type === "error") {
-        chatManager.updateMessage(
-          activeChat.id,
-          assistantId,
-          `Error: ${data.message}`
-        );
-      }
-    });
-    
-    function handleSend() {
-      if (!inputMessage.trim()) return;
-    
-      const currentInput = inputMessage;
-      inputMessage = "";
-    
-      const activeChat = chatManager.getActiveChat();
-      if (!activeChat) return;
-    
-      const userMsg = chatManager.createMessage("user", currentInput);
-      chatManager.addMessage(activeChat.id, userMsg);
-    
-      const assistantMsg = chatManager.createMessage("assistant", "");
-      chatManager.addMessage(activeChat.id, assistantMsg);
-    
-      websocket.send(JSON.stringify({
-        text: currentInput,
-        chatId: activeChat.id,
-        assistantId: assistantMsg.id
-      }));
-    }
-    
-    function handleKeyDown(event: KeyboardEvent) {
-      if (event.key === "Enter" && !event.shiftKey) {
-        event.preventDefault();
-        handleSend();
-      }
-    }
+  }
 </script>
 
 <main class="chat-main">
@@ -124,7 +69,7 @@
         {#each messages as msg}
           <div class="message-row" data-role={msg.role}>
             <div class="message-text">
-              {msg.content}
+              {@html markdownToHtml(msg.content)}
             </div>
           </div>
         {/each}
@@ -497,6 +442,12 @@
     padding-right: 4px;
     gap: 16px;
     box-sizing: border-box;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
+
+  .conversation-container::-webkit-scrollbar {
+    display: none;
   }
 
   .message-row {

@@ -4,13 +4,16 @@ import { loadState, saveState } from "./chat/chatStorage";
 import type {
     Chat,
     ChatState,
-    Message
 } from "./chat/types";
 
 const DEFAULT_STATE: ChatState = {
     chats: [],
-    activeChatId: null
+    activeChatId: null,
+    openChatMenuId: null
 };
+const ACTIVE_CHAT_KEY = "activeChatId";
+
+
 
 function createManager() {
     const state = $state<ChatState>(
@@ -26,8 +29,22 @@ function createManager() {
 
             if (saved) {
                 state.chats = saved.chats;
+            }
+            
+            const storedActiveChatId =
+                sessionStorage.getItem(ACTIVE_CHAT_KEY);
+            
+            if (
+                storedActiveChatId &&
+                state.chats.some(
+                    chat => chat.id === storedActiveChatId
+                )
+            ) {
                 state.activeChatId =
-                    saved.activeChatId;
+                    storedActiveChatId;
+            } else {
+                state.activeChatId =
+                    state.chats[0]?.id ?? null;
             }
         } catch (err) {
             console.error(err);
@@ -39,6 +56,16 @@ function createManager() {
     init();
 
     let saveTimer: number;
+
+    function syncActiveChat(id: string | null) {
+        state.activeChatId = id;
+    
+        if (id) {
+            sessionStorage.setItem(ACTIVE_CHAT_KEY, id);
+        } else {
+            sessionStorage.removeItem(ACTIVE_CHAT_KEY);
+        }
+    }
 
     function persist() {
         const snapshot = JSON.parse(JSON.stringify(state));
@@ -60,7 +87,7 @@ function createManager() {
             ...state.chats
         ];
 
-        state.activeChatId = chat.id;
+        syncActiveChat(chat.id);
 
         return chat;
     }
@@ -80,7 +107,7 @@ function createManager() {
     function setActiveChat(
         id: string
     ) {
-        state.activeChatId = id;
+        syncActiveChat(id);
     }
 
     function renameChat(
@@ -99,12 +126,9 @@ function createManager() {
             c => c.id !== id
         );
 
-        if (
-            state.activeChatId === id
-        ) {
-            state.activeChatId =
-                state.chats[0]?.id ??
-                null;
+        if (state.activeChatId === id) {
+            const next = state.chats[0]?.id ?? null;
+            syncActiveChat(next);
         }
     }
 
@@ -168,6 +192,28 @@ function createManager() {
             );
     }
 
+    function toggleChatMenu(id: string) {
+      state.openChatMenuId =
+        state.openChatMenuId === id ? null : id;
+    }
+    
+    function closeChatMenu() {
+      state.openChatMenuId = null;
+    }
+
+    let offsetX = 6;
+    let offsetY = -2;
+    let menuPos = $state({ x: 0 + offsetX, y: 0 + offsetY });
+  
+    function openMenuFromRect(rect: DOMRect) {
+      menuPos = {
+        x: rect.right + offsetX,
+        y: rect.top + offsetY
+      };
+    
+      return menuPos;
+    }
+
     return {
         state,
         createChat,
@@ -180,6 +226,8 @@ function createManager() {
         addMessage,
         updateMessage,
         removeMessage,
+        menuPos,
+        openMenuFromRect,
         persist
     };
 }

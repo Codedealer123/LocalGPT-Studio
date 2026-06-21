@@ -1,23 +1,23 @@
-<script>
+<script lang="ts">
   import '@awesome.me/webawesome/dist/styles/webawesome.css';
   import '@awesome.me/webawesome/dist/components/icon/icon.js';
+  import { chatManager } from './ts/chatManager.svelte';
+  import ChatItem from './ChatItem.svelte';
+  
 
-    
-  export let isSidebarOpen;
-  export let isMobile;
-  export let toggleSidebar;
-  export let name = "";
+  let { isSidebarOpen, toggleSidebar, isMobile, name } = $props();
 
   import { customPrompt } from "./ts/customPrompt";
 
   const menuItems = [
-    { icon: 'comment-medical', label: 'New chat', badge: false },
+    { icon: 'comment-medical', label: 'New chat', badge: false, onClick: () => chatManager.setActiveChat('') },
     { icon: 'comment-dots', label: 'Chats', badge: false },
     { icon: 'sd-card', label: 'Artifacts', badge: false },
   ];
 
   // State to manage the account settings dropdown
-  let isMenuOpen = false;
+  let isMenuOpen = false
+  let chats = $derived(chatManager.state.chats);
 
   function toggleMenu(event) {
     event.stopPropagation(); // Prevents instant closing from event bubbling
@@ -31,12 +31,14 @@
   const changeUsername = async () => {
     name = await customPrompt({title: 'Change Username', message: "", type: "text", placeholder: "John Smith"});
   }
+
+  
 </script>
 
 <svelte:window on:click={closeMenu} />
 
 {#if isMobile && isSidebarOpen}
-  <button class="sidebar-backdrop" on:click={toggleSidebar} aria-label="Close menu"></button>
+  <button class="sidebar-backdrop" onclick={toggleSidebar} aria-label="Close menu"></button>
 {/if}
 
 <aside class="sidebar" data-state={isSidebarOpen ? 'open' : 'closed'}>
@@ -44,14 +46,14 @@
     <div class="sidebar-top">
       <div class="sidebar-header">
         <span class="brand-logo">LocalGPT</span>
-        <button class="icon-btn" on:click={toggleSidebar} aria-label="Collapse panel">
+        <button class="icon-btn" onclick={toggleSidebar} aria-label="Collapse panel">
           <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="18" x="3" y="3" rx="2"/><path d="M9 3v18"/></svg>
         </button>
       </div>
 
       <nav class="nav-list">
         {#each menuItems as item}
-          <button class="nav-item">
+          <button class="nav-item" onclick={item.onClick ? item.onClick : () => {}}>
             <div class="nav-item-left">
               <wa-icon name={item.icon}></wa-icon>
               <span>{item.label}</span>
@@ -63,9 +65,19 @@
         {/each}
       </nav>
 
-      <div class="recents-divider">
-        <span>Recents</span>
-        <span class="sort-icon">↕</span>
+      <div class="recents-section">
+        <div class="recents-divider">
+          <span>Chats</span>
+        </div>
+      
+        <div class="chat-list">
+            {#each chats as chat (chat.id)}
+              <ChatItem
+                {chat}
+                activeChatId={chatManager.state.activeChatId}
+              />
+            {/each}
+        </div>
       </div>
     </div>
 
@@ -73,9 +85,12 @@
       {#if isMenuOpen}
         <!-- svelte-ignore a11y_click_events_have_key_events -->
         <!-- svelte-ignore a11y_no_static_element_interactions -->
-        <div class="account-popup" on:click|stopPropagation>
+        <div
+          class="account-popup"
+          onclick={(e) => e.stopPropagation()}
+        >
 
-          <button class="popup-item logout" on:click={changeUsername}>
+          <button class="popup-item logout" onclick={changeUsername}>
             <div class="popup-item-left">
               <span class="popup-icon">↱</span>
               <span>Change name</span>
@@ -92,7 +107,7 @@
         </div>
       {/if}
 
-      <button class="sidebar-footer" on:click={toggleMenu} aria-expanded={isMenuOpen}>
+      <button class="sidebar-footer" onclick={toggleMenu} aria-expanded={isMenuOpen}>
         <div class="footer-left">
           <div class="avatar">M</div>
           <div class="user-meta">
@@ -105,6 +120,111 @@
 </aside>
 
 <style>
+    
+    .recents-section {
+      margin-top: 24px;
+    }
+    .chat-item {
+      width: 100%;
+      background: none;
+      border: none;
+      color: var(--text-main);
+      text-align: left;
+      padding: 8px 12px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 14px;
+      margin-top: 2px;
+    }
+    
+    .chat-item:hover {
+      background: var(--bg-surface);
+    }
+    
+    .chat-item.active {
+      background: var(--bg-surface);
+      font-weight: 600;
+    }
+    
+    .chat-title {
+      display: block;
+            overflow: hidden;
+            white-space: nowrap;
+            text-overflow: ellipsis;
+          }
+          
+          .chat-item-wrapper {
+            position: relative;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            border-radius: 8px;
+          }
+          
+          /* hide by default */
+          .chat-menu-btn {
+            opacity: 0;
+            pointer-events: none;
+            background: none;
+            border: none;
+            color: var(--text-muted);
+            cursor: pointer;
+            padding: 4px 6px;
+            border-radius: 6px;
+            transition: opacity 0.15s ease;
+          }
+      
+          .chat-menu {
+            position: absolute;
+            right: 0;
+            top: 50%;
+            transform: translateY(-50%);
+            min-width: 140px;
+          
+            background: #1f1f1f;
+            border: 1px solid #2a2a2a;
+            border-radius: 10px;
+            padding: 4px;
+          
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
+            z-index: 100;
+          }
+      
+          .chat-menu-item {
+            width: 100%;
+            text-align: left;
+            background: none;
+            border: none;
+          
+            padding: 6px 8px;
+            border-radius: 6px;
+            font-size: 13px;
+            color: var(--text-main);
+            cursor: pointer;
+          }
+      
+          .chat-menu-item:hover {
+            background: var(--bg-surface);
+          }
+          
+          .chat-menu-item.danger {
+            color: #ff5a5a;
+          }
+          
+          /* show on hover */
+          .chat-item-wrapper:hover .chat-menu-btn {
+            opacity: 1;
+            pointer-events: auto;
+          }
+          
+          .chat-item-wrapper:hover .chat-item {
+            background: var(--bg-surface);
+          }
+          
+          .chat-item-wrapper:hover .chat-menu-btn {
+            opacity: 1;
+          }
+    
   .sidebar-backdrop {
     position: fixed;
     top: 0;

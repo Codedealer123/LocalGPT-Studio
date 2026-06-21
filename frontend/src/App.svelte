@@ -1,17 +1,18 @@
 <script>
   import Sidebar from './lib/Sidebar.svelte';
   import MainChat from './lib/Chat.svelte';
+  import { chatManager } from './lib/ts/chatManager.svelte';
 
-  // Svelte 5 State Runes
   let innerWidth = $state(1024);
   let isSidebarOpen = $state(true);
   let hasAutoCollapsed = $state(false);
   let name = $state("Guest");
 
-  // Svelte 5 Derived State (Replaces $: isMobile = ...)
   let isMobile = $derived(innerWidth < 768);
 
-  // Svelte 5 Effect Rune (Replaces $: if (isMobile) ... reactive blocks)
+  // GLOBAL CHAT MENU STATE (key addition)
+  let openChatMenuId = $derived(chatManager.state.openChatMenuId);
+
   $effect(() => {
     if (isMobile && !hasAutoCollapsed) {
       isSidebarOpen = false;
@@ -25,13 +26,30 @@
   function toggleSidebar() {
     isSidebarOpen = !isSidebarOpen;
   }
+
+  // close menu on outside click
+  function closeChatMenu() {
+    chatManager.closeChatMenu();
+  }
+
+  let menuPos = $derived(chatManager.menuPos);
 </script>
 
-<svelte:window bind:innerWidth />
+<svelte:window bind:innerWidth on:click={closeChatMenu} />
 
 <div class="app-container">
-  <Sidebar {isSidebarOpen} {isMobile} {toggleSidebar} {name} />
-  <MainChat {isSidebarOpen} {toggleSidebar} />
+
+  <Sidebar
+    {isSidebarOpen}
+    {isMobile}
+    {toggleSidebar}
+    {name}
+  />
+
+  <MainChat
+    {isSidebarOpen}
+    {toggleSidebar}
+  />
 </div>
 
 <style>
@@ -81,5 +99,60 @@
     overflow: hidden;
     width: 100%;
     height: 100%;
+  }
+
+  .chat-context-menu {
+    position: fixed;
+    z-index: 9999;
+  
+    background: var(--bg-surface);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+  
+    min-width: 180px;
+    padding: 6px;
+  
+    box-shadow: 0 12px 30px rgba(0, 0, 0, 0.5);
+  
+    animation: menuIn 0.12s ease-out;
+  
+    transform-origin: top left;
+    transition: top 0.08s ease-out, left 0.08s ease-out, opacity 0.12s ease;
+  }
+  
+  .menu-item {
+    width: 100%;
+    background: none;
+    border: none;
+    color: var(--text-main);
+  
+    padding: 8px 10px;
+    text-align: left;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 14px;
+  }
+  
+  .menu-item:hover {
+    background: var(--bg-surface-light);
+  }
+  
+  .menu-item.danger {
+    color: #ff5c5c;
+  }
+  
+  .menu-item.danger:hover {
+    background: rgba(255, 92, 92, 0.1);
+  }
+  
+  @keyframes menuIn {
+    from {
+      opacity: 0;
+      transform: scale(0.96);
+    }
+    to {
+      opacity: 1;
+      transform: scale(1);
+    }
   }
 </style>

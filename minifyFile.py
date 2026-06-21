@@ -2,7 +2,7 @@ import os
 import python_minifier
 
 source_dir = "./"
-output_dir = "./minifiedFiles"
+output_dir = "./"
 
 file_name = input(
     "What is the relative path to the Python file you want to minify? "
@@ -26,7 +26,7 @@ for root, dirs, files in os.walk(source_dir):
         if relative_file_path == file_name:
             file_found = True
 
-            output_file_path = os.path.join(output_dir, relative_file_path)
+            output_file_path = os.path.join(output_dir, "minified_" + relative_file_path)
 
             print(
                 f"Minifying file: {relative_file_path}, "

@@ -6,3 +6,8 @@ pyproject.toml
 backend/llmBackend/testModel/
 backend/llmBackend/quant_model_map.json
 __pycache__/
+backend/
+prodBackend/llmBackend/testModel/
+prodBackend/__pycache__/
+
+prodBackend/llmBackend/quant_model_map.json
