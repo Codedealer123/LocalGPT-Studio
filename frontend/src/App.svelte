@@ -35,7 +35,7 @@
   let menuPos = $derived(chatManager.menuPos);
 </script>
 
-<svelte:window bind:innerWidth on:click={closeChatMenu} />
+<svelte:window bind:innerWidth />
 
 <div class="app-container">
 

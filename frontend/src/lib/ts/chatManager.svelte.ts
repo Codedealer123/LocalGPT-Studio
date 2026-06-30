@@ -5,6 +5,7 @@ import type {
     Chat,
     ChatState,
 } from "./chat/types";
+import { createChat as apiCreateChat, getChats, getMessages, deleteChat as apiDeleteChat, renameChat as apiRenameChat } from "./api";
 
 const DEFAULT_STATE: ChatState = {
     chats: [],
@@ -24,32 +25,63 @@ function createManager() {
 
     async function init() {
         try {
-            const saved =
-                await loadState();
-
-            if (saved) {
-                state.chats = saved.chats;
-            }
-            
+            const serverChats = await getChats();
+    
+            state.chats = serverChats.map((c: any) => ({
+                id: c.id,
+                title: c.title,
+                createdAt: c.created_at,
+                messages: []
+            }));
+          
             const storedActiveChatId =
                 sessionStorage.getItem(ACTIVE_CHAT_KEY);
-            
+    
             if (
                 storedActiveChatId &&
                 state.chats.some(
                     chat => chat.id === storedActiveChatId
                 )
             ) {
-                state.activeChatId =
-                    storedActiveChatId;
+                state.activeChatId = storedActiveChatId;
             } else {
                 state.activeChatId =
                     state.chats[0]?.id ?? null;
             }
+    
         } catch (err) {
-            console.error(err);
+            console.error("Failed to load chats from backend:", err);
+    
+            try {
+                const saved = await loadState();
+    
+                if (saved) {
+                    state.chats = saved.chats;
+                }
+    
+                const storedActiveChatId =
+                    sessionStorage.getItem(ACTIVE_CHAT_KEY);
+    
+                if (
+                    storedActiveChatId &&
+                    state.chats.some(
+                        chat => chat.id === storedActiveChatId
+                    )
+                ) {
+                    state.activeChatId = storedActiveChatId;
+                } else {
+                    state.activeChatId =
+                        state.chats[0]?.id ?? null;
+                }
+    
+            } catch (fallbackErr) {
+                console.error("Fallback load failed:", fallbackErr);
+    
+                state.chats = [];
+                state.activeChatId = null;
+            }
         }
-
+    
         initialized = true;
     }
 
@@ -72,23 +104,19 @@ function createManager() {
         saveState(snapshot).catch(console.error);
     }
   
-    function createChat(
-        title = "New Chat"
-    ): Chat {
+    async function createChat(title = "New Chat") {
+        const res = await apiCreateChat(title);
+    
         const chat: Chat = {
-            id: crypto.randomUUID(),
-            title,
+            id: res.chat_id,
+            title: res.title,
             createdAt: Date.now(),
             messages: []
         };
-
-        state.chats = [
-            chat,
-            ...state.chats
-        ];
-
+    
+        state.chats = [chat, ...state.chats];
         syncActiveChat(chat.id);
-
+    
         return chat;
     }
 
@@ -104,28 +132,31 @@ function createManager() {
         );
     }
 
-    function setActiveChat(
-        id: string
-    ) {
+    async function setActiveChat(id: string) {
         syncActiveChat(id);
+    
+        const chat = getChat(id);
+        if (!chat) return;
+    
+        const res = await getMessages(id);
+    
+        chat.messages = res.messages;
     }
 
-    function renameChat(
-        id: string,
-        title: string
-    ) {
+    async function renameChat(id: string, title: string) {
+        await apiRenameChat(id, title);
+    
         const chat = getChat(id);
-
         if (!chat) return;
-
+    
         chat.title = title;
     }
 
-    function deleteChat(id: string) {
-        state.chats = state.chats.filter(
-            c => c.id !== id
-        );
-
+    async function deleteChat(id: string) {
+        await apiDeleteChat(id);
+    
+        state.chats = state.chats.filter(c => c.id !== id);
+    
         if (state.activeChatId === id) {
             const next = state.chats[0]?.id ?? null;
             syncActiveChat(next);
